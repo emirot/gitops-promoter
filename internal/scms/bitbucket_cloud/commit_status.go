@@ -54,19 +54,29 @@ func (cs *CommitStatus) Set(ctx context.Context, commitStatus *v1alpha1.CommitSt
 		RepoSlug: repo.Spec.BitbucketCloud.Repository,
 		Revision: commitStatus.Spec.Sha,
 	}
-
+	fmt.Printf("specnolanname:%+v", commitStatus.Spec.Name)
 	commitStatusOptions := &bitbucket.CommitStatusOptions{
-		State:       phaseToBuildState(commitStatus.Spec.Phase),
-		Key:         commitStatus.Spec.Name,
-		Url:         commitStatus.Spec.Url,
+		State: phaseToBuildState(commitStatus.Spec.Phase),
+		//Key:   commitStatus.Spec.Name,
+		Key: truncateString(commitStatus.Spec.Name, 40), // Bitbucket Cloud Key max length is 40 characters
+		//Url:         commitStatus.Spec.Url,
+		Url:         "https://example.com", // Bitbucket requires a URL, but we don't use it
 		Description: commitStatus.Spec.Description,
 	}
-
+	fmt.Printf("commitStatusOptions: %+v", commitStatusOptions)
 	start := time.Now()
 	result, err := cs.client.Repositories.Commits.CreateCommitStatus(
 		commitOptions,
 		commitStatusOptions,
 	)
+
+	if uerr, ok := err.(*bitbucket.UnexpectedResponseStatusError); ok {
+		// uerr is of type UnexpectedResponseStatusError
+		// handle the error here
+		fmt.Println("UnexpectedResponseStatusError:", uerr.Status, uerr.ErrorWithBody())
+	}
+
+	fmt.Println("res:", result)
 	statusCode := parseErrorStatusCode(err, http.StatusCreated)
 	metrics.RecordSCMCall(repo, metrics.SCMAPICommitStatus, metrics.SCMOperationCreate, statusCode, time.Since(start), nil)
 
@@ -88,15 +98,8 @@ func (cs *CommitStatus) Set(ctx context.Context, commitStatus *v1alpha1.CommitSt
 		return nil, errors.New("state field missing or invalid type in Bitbucket API response")
 	}
 
-	// Extract uuid
-	uuid, ok := resultMap["uuid"].(string)
-	if !ok {
-		return nil, errors.New("uuid field missing or invalid type in Bitbucket API response")
-	}
-
 	commitStatus.Status.Phase = buildStateToPhase(state)
 	commitStatus.Status.Sha = commitStatus.Spec.Sha
-	commitStatus.Status.Id = uuid
 
 	return commitStatus, nil
 }

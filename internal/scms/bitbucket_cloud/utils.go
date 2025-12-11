@@ -68,3 +68,12 @@ func buildStateToPhase(buildState string) v1alpha1.CommitStatusPhase {
 		return v1alpha1.CommitPhaseFailure
 	}
 }
+
+// bitbucket has a max length of 40 for the "key" field of a commit status
+func truncateString(str string, num int) string {
+	runes := []rune(str)
+	if len(runes) <= num {
+		return str
+	}
+	return string(runes[:num])
+}

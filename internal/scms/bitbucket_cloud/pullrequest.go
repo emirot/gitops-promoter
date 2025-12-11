@@ -147,12 +147,15 @@ func (pr *PullRequest) Close(ctx context.Context, prObj v1alpha1.PullRequest) er
 	}
 
 	start := time.Now()
-	_, err = pr.client.Repositories.PullRequests.Decline(options)
+	fmt.Println("nolanclose", options)
+	test, err := pr.client.Repositories.PullRequests.Decline(options)
+	fmt.Printf("interfacetest: %+v %+v\n", test, err)
 	statusCode := parseErrorStatusCode(err, http.StatusOK)
 	metrics.RecordSCMCall(repo, metrics.SCMAPIPullRequest, metrics.SCMOperationClose, statusCode, time.Since(start), nil)
 
+	fmt.Println("nolanclosestatus:", statusCode)
 	if err != nil {
-		return fmt.Errorf("failed to close pull request: %w", err)
+		return fmt.Errorf("failed to close pull request: %w", err.(*bitbucket.UnexpectedResponseStatusError).ErrorWithBody())
 	}
 
 	logger.V(4).Info("bitbucket response status", "status", statusCode)
@@ -223,6 +226,7 @@ func (pr *PullRequest) FindOpen(ctx context.Context, pullRequest v1alpha1.PullRe
 
 	start := time.Now()
 	result, err := pr.client.Repositories.PullRequests.Gets(options)
+	fmt.Println("pr", result)
 	statusCode := parseErrorStatusCode(err, http.StatusOK)
 	metrics.RecordSCMCall(repo, metrics.SCMAPIPullRequest, metrics.SCMOperationList, statusCode, time.Since(start), nil)
 

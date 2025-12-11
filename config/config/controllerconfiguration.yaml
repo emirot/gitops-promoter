@@ -5,12 +5,12 @@ metadata:
     app.kubernetes.io/name: promoter
     app.kubernetes.io/part-of: promoter
     app.kubernetes.io/managed-by: kustomize
-  name: controller-configuration
+  name: promoter-controller-configuration
 spec:
   promotionStrategy:
     workQueue:
       maxConcurrentReconciles: 10
-      requeueDuration: "5m"
+      requeueDuration: "15s"
       rateLimiter:
         maxOf:
           - bucket:
@@ -23,7 +23,7 @@ spec:
   changeTransferPolicy:
     workQueue:
       maxConcurrentReconciles: 10
-      requeueDuration: "5m"
+      requeueDuration: "15s"
       rateLimiter:
         maxOf:
           - bucket:
@@ -36,7 +36,7 @@ spec:
   pullRequest:
     workQueue:
       maxConcurrentReconciles: 10
-      requeueDuration: "5m"
+      requeueDuration: "15s"
       rateLimiter:
         maxOf:
           - bucket:
@@ -52,7 +52,7 @@ spec:
   commitStatus:
     workQueue:
       maxConcurrentReconciles: 10
-      requeueDuration: "5m"
+      requeueDuration: "15s"
       rateLimiter:
         maxOf:
           - bucket:
@@ -66,7 +66,7 @@ spec:
     watchLocalApplications: true
     workQueue:
       maxConcurrentReconciles: 10
-      requeueDuration: "5m"
+      requeueDuration: "15s"
       rateLimiter:
         maxOf:
           - bucket:
@@ -79,7 +79,7 @@ spec:
   timedCommitStatus:
     workQueue:
       maxConcurrentReconciles: 10
-      requeueDuration: "5m"
+      requeueDuration: "15s"
       rateLimiter:
         maxOf:
           - bucket:
