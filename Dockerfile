@@ -1,4 +1,4 @@
-# Build the dashboard UI
+# Build the dashboard UI h
 FROM node:18-bullseye-slim AS dashboard-builder
 WORKDIR /workspace
 
