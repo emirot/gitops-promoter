@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/argoproj-labs/gitops-promoter/internal/scms/azuredevops"
 	"github.com/argoproj-labs/gitops-promoter/internal/types/constants"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -242,6 +241,14 @@ func (r *ChangeTransferPolicyReconciler) buildHistoryEntry(ctx context.Context, 
 	return historyEntry, true, nil
 }
 
+// getFirstTrailerValue returns the first value for a given trailer key, or an empty string if not found.
+func getFirstTrailerValue(trailers map[string][]string, key string) string {
+	if values, ok := trailers[key]; ok && len(values) > 0 {
+		return values[0]
+	}
+	return ""
+}
+
 // populateActiveMetadata populates the active metadata for a history entry
 func (r *ChangeTransferPolicyReconciler) populateActiveMetadata(ctx context.Context, h *promoterv1alpha1.History, sha string, gitOperations *git.EnvironmentOperations) {
 	logger := log.FromContext(ctx)
@@ -260,10 +267,10 @@ func (r *ChangeTransferPolicyReconciler) populateActiveMetadata(ctx context.Cont
 }
 
 // populateProposedMetadata populates the proposed metadata for a history entry
-func (r *ChangeTransferPolicyReconciler) populateProposedMetadata(ctx context.Context, h *promoterv1alpha1.History, activeTrailers map[string]string, gitOperations *git.EnvironmentOperations) {
+func (r *ChangeTransferPolicyReconciler) populateProposedMetadata(ctx context.Context, h *promoterv1alpha1.History, activeTrailers map[string][]string, gitOperations *git.EnvironmentOperations) {
 	logger := log.FromContext(ctx)
 
-	proposedHydratedSha := activeTrailers[constants.TrailerShaHydratedProposed]
+	proposedHydratedSha := getFirstTrailerValue(activeTrailers, constants.TrailerShaHydratedProposed)
 	if proposedHydratedSha == "" {
 		logger.V(4).Info("No " + constants.TrailerShaHydratedProposed + " trailer found")
 		return
