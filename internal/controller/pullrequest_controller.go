@@ -293,6 +293,9 @@ func (r *PullRequestReconciler) getPullRequestProvider(ctx context.Context, pr p
 		return forgejo.NewForgejoPullRequestProvider(r.Client, *secret, scmProvider.GetSpec().Forgejo.Domain) //nolint:wrapcheck
 	case scmProvider.GetSpec().Fake != nil:
 		return fake.NewFakePullRequestProvider(r.Client), nil
+	case scmProvider.GetSpec().AzureDevOps != nil:
+		return nil, nil
+		// return azuredevops.NewAzdoGitAuthenticationProvider(ctx, r.Client, scmProvider, secret, client.ObjectKey{Namespace: namespace, Name: repoRef.Name}), nil
 	default:
 		return nil, fmt.Errorf("unsupported SCM provider: %s", scmProvider.GetName())
 	}

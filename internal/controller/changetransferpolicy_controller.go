@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/argoproj-labs/gitops-promoter/internal/scms/azuredevops"
 	"github.com/argoproj-labs/gitops-promoter/internal/types/constants"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -538,6 +539,9 @@ func (r *ChangeTransferPolicyReconciler) getGitAuthProvider(ctx context.Context,
 			return nil, fmt.Errorf("failed to create Bitbucket Cloud Auth Provider: %w", err)
 		}
 		return provider, nil
+	case scmProvider.GetSpec().AzureDevOps != nil:
+		logger.V(4).Info("Creating Azure DevOps git authentication provider")
+		return azuredevops.NewAzdoGitAuthenticationProvider(ctx, r.Client, scmProvider, secret, client.ObjectKey{Namespace: namespace, Name: repoRef.Name}), nil
 	default:
 		return nil, errors.New("no supported git authentication provider found")
 	}
@@ -821,6 +825,8 @@ func (r *ChangeTransferPolicyReconciler) creatOrUpdatePullRequest(ctx context.Co
 		prName = utils.GetPullRequestName(gitRepo.Spec.Fake.Owner, gitRepo.Spec.Fake.Name, ctp.Spec.ProposedBranch, ctp.Spec.ActiveBranch)
 	case gitRepo.Spec.BitbucketCloud != nil:
 		prName = utils.GetPullRequestName(gitRepo.Spec.BitbucketCloud.Owner, gitRepo.Spec.BitbucketCloud.Name, ctp.Spec.ProposedBranch, ctp.Spec.ActiveBranch)
+	case gitRepo.Spec.AzureDevOps != nil:
+		prName = utils.GetPullRequestName(gitRepo.Spec.AzureDevOps.Project, gitRepo.Spec.AzureDevOps.Name, ctp.Spec.ProposedBranch, ctp.Spec.ActiveBranch)
 	default:
 		return nil, errors.New("unsupported git repository type")
 	}
