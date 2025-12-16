@@ -63,6 +63,8 @@ func GetScmProviderFromGitRepository(ctx context.Context, k8sClient client.Clien
 		(repositoryRef.Spec.GitLab != nil && provider.GetSpec().GitLab == nil) ||
 		(repositoryRef.Spec.Forgejo != nil && provider.GetSpec().Forgejo == nil) ||
 		(repositoryRef.Spec.Fake != nil && provider.GetSpec().Fake == nil) ||
+		(repositoryRef.Spec.BitbucketCloud != nil && provider.GetSpec().BitbucketCloud == nil) ||
+		(repositoryRef.Spec.Fake != nil && provider.GetSpec().Fake == nil) ||
 		(repositoryRef.Spec.AzureDevOps != nil && provider.GetSpec().AzureDevOps == nil) {
 		return nil, errors.New("wrong ScmProvider configured for Repository")
 	}
@@ -84,12 +86,10 @@ func GetGitRepositoryFromObjectKey(ctx context.Context, k8sClient client.Client,
 // GetScmProviderAndSecretFromRepositoryReference retrieves the ScmProvider and its associated Secret from a GitRepository reference.
 func GetScmProviderAndSecretFromRepositoryReference(ctx context.Context, k8sClient client.Client, controllerNamespace string, repositoryRef promoterv1alpha1.ObjectReference, obj metav1.Object) (promoterv1alpha1.GenericScmProvider, *v1.Secret, error) {
 	logger := log.FromContext(ctx)
-	fmt.Println("namespace", obj.GetNamespace(), "name", repositoryRef.Name)
 	gitRepo, err := GetGitRepositoryFromObjectKey(ctx, k8sClient, client.ObjectKey{Namespace: obj.GetNamespace(), Name: repositoryRef.Name})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get GitRepository2: %w", err)
+		return nil, nil, fmt.Errorf("failed to get GitRepository: %w", err)
 	}
-	fmt.Println("gitRepo", gitRepo)
 
 	scmProvider, err := GetScmProviderFromGitRepository(ctx, k8sClient, gitRepo, obj)
 	if err != nil {
