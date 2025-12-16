@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/argoproj-labs/gitops-promoter/api/v1alpha1"
 	"github.com/microsoft/azure-devops-go-api/azuredevops/v7"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/argoproj-labs/gitops-promoter/api/v1alpha1"
 )
 
 const (
@@ -45,10 +42,7 @@ const (
 
 // NewAzdoGitAuthenticationProvider creates a new instance of GitAuthenticationProvider for Azure DevOps.
 // It supports both Personal Access Token (PAT)
-func NewAzdoGitAuthenticationProvider(ctx context.Context, k8sClient client.Client, scmProvider v1alpha1.GenericScmProvider, secret *v1.Secret, repoRef client.ObjectKey) GitAuthenticationProvider {
-	logger := log.FromContext(ctx).WithName("azuredevops-auth")
-	logger.V(4).Info("Creating Azure DevOps GitAuthenticationProvider")
-	logger.Info("Configuring Azure DevOps authentication with Personal Access Token")
+func NewAzdoGitAuthenticationProvider(scmProvider v1alpha1.GenericScmProvider, secret *v1.Secret) GitAuthenticationProvider {
 	token := string(secret.Data[azureDevOpsTokenSecretKey])
 
 	return GitAuthenticationProvider{

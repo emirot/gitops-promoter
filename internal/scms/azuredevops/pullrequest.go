@@ -226,11 +226,21 @@ func (pr *PullRequest) Merge(ctx context.Context, pullRequest v1alpha1.PullReque
 		DeleteSourceBranch: &[]bool{false}[0], // Keep source branch by default
 	}
 
+	existingPR, err := gitClient.GetPullRequest(ctx, git.GetPullRequestArgs{
+		RepositoryId:  &gitRepo.Spec.AzureDevOps.Name,
+		PullRequestId: &prId,
+		Project:       &gitRepo.Spec.AzureDevOps.Project,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to fetch existing pull request: %w", err)
+	}
+
 	// Set merge status to completed
 	status := git.PullRequestStatusValues.Completed
 	gitPullRequest := git.GitPullRequest{
-		Status:            &status,
-		CompletionOptions: &completionOptions,
+		Status:                &status,
+		CompletionOptions:     &completionOptions,
+		LastMergeSourceCommit: existingPR.LastMergeSourceCommit,
 	}
 
 	start := time.Now()
@@ -240,6 +250,9 @@ func (pr *PullRequest) Merge(ctx context.Context, pullRequest v1alpha1.PullReque
 		PullRequestId:          &prId,
 		Project:                &gitRepo.Spec.AzureDevOps.Project,
 	})
+	fmt.Println("PR", prId, "merged with message:", gitPullRequest)
+	fmt.Println("REpo", gitRepo.Spec.AzureDevOps.Name)
+	fmt.Println("Project", gitRepo.Spec.AzureDevOps.Project)
 
 	// Record metrics and handle response
 	statusCode := 200

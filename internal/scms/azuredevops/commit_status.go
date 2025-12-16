@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	promoterv1alpha1 "github.com/argoproj-labs/gitops-promoter/api/v1alpha1"
+	"github.com/argoproj-labs/gitops-promoter/api/v1alpha1"
 	"github.com/argoproj-labs/gitops-promoter/internal/metrics"
 	"github.com/argoproj-labs/gitops-promoter/internal/scms"
 	"github.com/argoproj-labs/gitops-promoter/internal/utils"
@@ -28,7 +28,7 @@ type CommitStatus struct {
 var _ scms.CommitStatusProvider = &CommitStatus{}
 
 // NewAzureDevopsCommitStatusProvider creates a new instance of CommitStatus for Azure DevOps.
-func NewAzureDevopsCommitStatusProvider(ctx context.Context, k8sClient client.Client, scmProvider promoterv1alpha1.GenericScmProvider, secret v1.Secret, org string) (*CommitStatus, error) {
+func NewAzureDevopsCommitStatusProvider(ctx context.Context, k8sClient client.Client, scmProvider v1alpha1.GenericScmProvider, secret v1.Secret, org string) (*CommitStatus, error) {
 	client, _, err := GetClient(ctx, scmProvider, secret, org)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func NewAzureDevopsCommitStatusProvider(ctx context.Context, k8sClient client.Cl
 }
 
 // Set sets the commit status for a given commit SHA in the specified repository.
-func (cs CommitStatus) Set(ctx context.Context, commitStatus *promoterv1alpha1.CommitStatus) (*promoterv1alpha1.CommitStatus, error) {
+func (cs CommitStatus) Set(ctx context.Context, commitStatus *v1alpha1.CommitStatus) (*v1alpha1.CommitStatus, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Setting Commit Status for Azure DevOps")
 
@@ -67,11 +67,11 @@ func (cs CommitStatus) Set(ctx context.Context, commitStatus *promoterv1alpha1.C
 	// Map GitOps Promoter status phase to Azure DevOps status state
 	var state git.GitStatusState
 	switch commitStatus.Spec.Phase {
-	case promoterv1alpha1.CommitPhasePending:
+	case v1alpha1.CommitPhasePending:
 		state = git.GitStatusStateValues.Pending
-	case promoterv1alpha1.CommitPhaseSuccess:
+	case v1alpha1.CommitPhaseSuccess:
 		state = git.GitStatusStateValues.Succeeded
-	case promoterv1alpha1.CommitPhaseFailure:
+	case v1alpha1.CommitPhaseFailure:
 		state = git.GitStatusStateValues.Failed
 	default:
 		state = git.GitStatusStateValues.Pending
@@ -80,6 +80,11 @@ func (cs CommitStatus) Set(ctx context.Context, commitStatus *promoterv1alpha1.C
 	// Create Git commit status
 	genre := "promoter"
 	fmt.Println("URL", commitStatus.Spec.Url)
+
+	if commitStatus.Spec.Url == "" {
+		commitStatus.Spec.Url = createCommitURL(gitRepo, commitStatus.Spec.Sha)
+	}
+	fmt.Println("URL2", commitStatus.Spec.Url)
 	gitCommitStatus := git.GitStatus{
 		Context: &git.GitStatusContext{
 			Name:  &commitStatus.Spec.Name,
@@ -124,17 +129,25 @@ func (cs CommitStatus) Set(ctx context.Context, commitStatus *promoterv1alpha1.C
 }
 
 // mapAzureDevOpsStateToPhase maps Azure DevOps GitStatusState to GitOps Promoter CommitStatusPhase
-func mapAzureDevOpsStateToPhase(state git.GitStatusState) promoterv1alpha1.CommitStatusPhase {
+func mapAzureDevOpsStateToPhase(state git.GitStatusState) v1alpha1.CommitStatusPhase {
 	switch state {
 	case git.GitStatusStateValues.Pending:
-		return promoterv1alpha1.CommitPhasePending
+		return v1alpha1.CommitPhasePending
 	case git.GitStatusStateValues.Succeeded:
-		return promoterv1alpha1.CommitPhaseSuccess
+		return v1alpha1.CommitPhaseSuccess
 	case git.GitStatusStateValues.Failed:
-		return promoterv1alpha1.CommitPhaseFailure
+		return v1alpha1.CommitPhaseFailure
 	case git.GitStatusStateValues.Error:
-		return promoterv1alpha1.CommitPhaseFailure // Map error to failure as we only have 3 states
+		return v1alpha1.CommitPhaseFailure // Map error to failure as we only have 3 states
 	default:
-		return promoterv1alpha1.CommitPhasePending
+		return v1alpha1.CommitPhasePending
 	}
+}
+
+func createCommitURL(repo *v1alpha1.GitRepository, sha string) string {
+	return fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s/commit/%s",
+		repo.Spec.AzureDevOps.Project,
+		repo.Spec.AzureDevOps.Project,
+		repo.Spec.AzureDevOps.Name,
+		sha)
 }

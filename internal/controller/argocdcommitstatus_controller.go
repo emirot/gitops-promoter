@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/argoproj-labs/gitops-promoter/internal/metrics"
+	"github.com/argoproj-labs/gitops-promoter/internal/scms/azuredevops"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -748,6 +749,9 @@ func (r *ArgoCDCommitStatusReconciler) getGitAuthProvider(ctx context.Context, a
 	case scmProvider.GetSpec().Forgejo != nil:
 		logger.V(4).Info("Creating Forgejo git authentication provider")
 		return forgejo.NewForgejoGitAuthenticationProvider(scmProvider, secret), ps.Spec.RepositoryReference, nil
+	case scmProvider.GetSpec().AzureDevOps != nil:
+		logger.V(4).Info("Creating Azure DevOps git authentication provider")
+		return azuredevops.NewAzdoGitAuthenticationProvider(scmProvider, secret), ps.Spec.RepositoryReference, nil
 	default:
 		return nil, ps.Spec.RepositoryReference, errors.New("no supported git authentication provider found")
 	}

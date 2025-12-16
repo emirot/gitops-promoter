@@ -541,7 +541,7 @@ func (r *ChangeTransferPolicyReconciler) getGitAuthProvider(ctx context.Context,
 		return provider, nil
 	case scmProvider.GetSpec().AzureDevOps != nil:
 		logger.V(4).Info("Creating Azure DevOps git authentication provider")
-		return azuredevops.NewAzdoGitAuthenticationProvider(ctx, r.Client, scmProvider, secret, client.ObjectKey{Namespace: namespace, Name: repoRef.Name}), nil
+		return azuredevops.NewAzdoGitAuthenticationProvider(scmProvider, secret), nil
 	default:
 		return nil, errors.New("no supported git authentication provider found")
 	}
