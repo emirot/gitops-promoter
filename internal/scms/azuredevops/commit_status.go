@@ -79,6 +79,7 @@ func (cs CommitStatus) Set(ctx context.Context, commitStatus *promoterv1alpha1.C
 
 	// Create Git commit status
 	genre := "promoter"
+	fmt.Println("URL", commitStatus.Spec.Url)
 	gitCommitStatus := git.GitStatus{
 		Context: &git.GitStatusContext{
 			Name:  &commitStatus.Spec.Name,

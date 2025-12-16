@@ -22,6 +22,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/argoproj-labs/gitops-promoter/internal/scms/azuredevops"
 	"github.com/argoproj-labs/gitops-promoter/internal/settings"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -294,8 +295,7 @@ func (r *PullRequestReconciler) getPullRequestProvider(ctx context.Context, pr p
 	case scmProvider.GetSpec().Fake != nil:
 		return fake.NewFakePullRequestProvider(r.Client), nil
 	case scmProvider.GetSpec().AzureDevOps != nil:
-		return nil, nil
-		// return azuredevops.NewAzdoGitAuthenticationProvider(ctx, r.Client, scmProvider, secret, client.ObjectKey{Namespace: namespace, Name: repoRef.Name}), nil
+		return azuredevops.NewAzdoPullRequestProvider(r.Client, *secret, scmProvider, scmProvider.GetSpec().AzureDevOps.Organization) //nolint:wrapcheck
 	default:
 		return nil, fmt.Errorf("unsupported SCM provider: %s", scmProvider.GetName())
 	}

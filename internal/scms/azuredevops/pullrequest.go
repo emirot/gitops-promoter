@@ -29,8 +29,8 @@ type PullRequest struct {
 var _ scms.PullRequestProvider = &PullRequest{}
 
 // NewAzdoPullRequestProvider creates a new instance of PullRequest for Azure DevOps.
-func NewAzdoPullRequestProvider(ctx context.Context, k8sClient client.Client, scmProvider v1alpha1.GenericScmProvider, secret v1.Secret, org string) (*PullRequest, error) {
-	client, _, err := GetClient(ctx, scmProvider, secret, org)
+func NewAzdoPullRequestProvider(k8sClient client.Client, secret v1.Secret, scmProvider v1alpha1.GenericScmProvider, org string) (*PullRequest, error) {
+	client, _, err := GetClient(context.Background(), scmProvider, secret, org)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (pr *PullRequest) FindOpen(ctx context.Context, pullRequest v1alpha1.PullRe
 		firstPR := (*pullRequests)[0]
 
 		// Generate URL directly since pullRequest.Status.ID is not set yet
-		url, err := pr.generatePullRequestUrl(ctx, gitRepo, *firstPR.PullRequestId)
+		url, err := pr.generatePullRequestUrl(ctx, pullRequest, *firstPR.PullRequestId)
 		if err != nil {
 			return false, "", time.Time{}, fmt.Errorf("failed to generate pull request URL: %w", err)
 		}
@@ -323,27 +323,23 @@ func (pr *PullRequest) FindOpen(ctx context.Context, pullRequest v1alpha1.PullRe
 
 // GetUrl returns the URL of the pull request.
 func (pr *PullRequest) GetUrl(ctx context.Context, pullRequest v1alpha1.PullRequest) (string, error) {
-	gitRepo, err := utils.GetGitRepositoryFromObjectKey(ctx, pr.k8sClient, client.ObjectKey{Namespace: pullRequest.Namespace, Name: pullRequest.Spec.RepositoryReference.Name})
-	if err != nil {
-		return "", fmt.Errorf("failed to get GitRepository: %w", err)
-	}
-
 	prId, err := strconv.Atoi(pullRequest.Status.ID)
 	if err != nil {
 		return "", fmt.Errorf("failed to convert PR ID to int when generating pull request url: %w", err)
 	}
 
-	return pr.generatePullRequestUrl(ctx, gitRepo, prId)
+	return pr.generatePullRequestUrl(ctx, pullRequest, prId)
 }
 
-// generatePullRequestUrl generates a pull request URL for the given repository and PR ID
-func (pr *PullRequest) generatePullRequestUrl(ctx context.Context, gitRepo *v1alpha1.GitRepository, prId int) (string, error) {
+// // generatePullRequestUrl generates a pull request URL for the given repository and PR ID
+func (pr *PullRequest) generatePullRequestUrl(ctx context.Context, prObj v1alpha1.PullRequest, prId int) (string, error) {
 	// Get the SCM provider to determine the domain
 	// Convert ScmProviderObjectReference to ObjectReference
-	scmProviderRef := v1alpha1.ObjectReference{
-		Name: gitRepo.Spec.ScmProviderRef.Name,
+	gitRepo, err := utils.GetGitRepositoryFromObjectKey(ctx, pr.k8sClient, client.ObjectKey{Namespace: prObj.Namespace, Name: prObj.Spec.RepositoryReference.Name})
+	if err != nil {
+		return "", fmt.Errorf("failed to get GitRepository: %w", err)
 	}
-	scmProvider, _, err := utils.GetScmProviderAndSecretFromRepositoryReference(ctx, pr.k8sClient, "", scmProviderRef, gitRepo)
+	scmProvider, _, err := utils.GetScmProviderAndSecretFromRepositoryReference(ctx, pr.k8sClient, "", prObj.Spec.RepositoryReference, &prObj)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SCM provider: %w", err)
 	}
