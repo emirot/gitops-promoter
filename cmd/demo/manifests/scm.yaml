@@ -1,0 +1,10 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: ScmProvider
+metadata:
+  name: gitops-promoter-demo-scm
+spec:
+  secretRef:
+    name: github-demo-secret
+  github:
+    appID: <your-app-id>
+    installationID: <your-installation-id>

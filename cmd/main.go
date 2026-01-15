@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -24,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 	"syscall"
 
 	"go.uber.org/zap/zapcore"
@@ -32,13 +34,16 @@ import (
 	"github.com/argoproj-labs/gitops-promoter/internal/controller"
 	"github.com/argoproj-labs/gitops-promoter/internal/utils"
 	"github.com/argoproj-labs/gitops-promoter/internal/webserver"
+	"github.com/google/go-github/v71/github"
 
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/term"
 
+	"github.com/argoproj-labs/gitops-promoter/cmd/demo"
 	"github.com/argoproj-labs/gitops-promoter/internal/settings"
 	"github.com/argoproj-labs/gitops-promoter/internal/types/constants"
 	"github.com/argoproj-labs/gitops-promoter/internal/utils/gitpaths"
@@ -444,6 +449,7 @@ func newCommand() *cobra.Command {
 	clientConfig = addKubectlFlags(cmd.PersistentFlags())
 	cmd.AddCommand(newControllerCommand(clientConfig))
 	cmd.AddCommand(newDashboardCommand(clientConfig))
+	cmd.AddCommand(demo.NewDemoCommand())
 	return cmd
 }
 
@@ -469,4 +475,59 @@ func ignoreCanceled(err error) error {
 		return nil
 	}
 	return err
+}
+
+func modifyFiles(ctx context.Context, client *github.Client, repo *github.Repository) error {
+	owner := repo.GetOwner().GetLogin()
+	repoName := repo.GetName()
+
+	// Example: Update a config file
+	filePath := "config/values.yaml"
+
+	// Get the current file content
+	fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repoName, filePath, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get file %s: %w", filePath, err)
+	}
+
+	// Decode content
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return fmt.Errorf("failed to decode content: %w", err)
+	}
+
+	// Modify the content (example: replace placeholder)
+	newContent := strings.ReplaceAll(content, "REPLACE_ME", owner)
+
+	// Commit the updated file
+	_, _, err = client.Repositories.UpdateFile(ctx, owner, repoName, filePath, &github.RepositoryContentFileOptions{
+		Message: github.String("chore: configure repository for " + owner),
+		Content: []byte(newContent),
+		SHA:     fileContent.SHA,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update file: %w", err)
+	}
+
+	fmt.Printf("Updated %s\n", filePath)
+	return nil
+}
+
+func promptForToken() (string, error) {
+	fmt.Print("Enter your GitHub personal access token: ")
+
+	// Read password without echoing
+	tokenBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println() // newline after hidden input
+	if err != nil {
+		// Fallback for non-terminal (e.g., piped input)
+		reader := bufio.NewReader(os.Stdin)
+		token, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(token), nil
+	}
+
+	return string(tokenBytes), nil
 }
