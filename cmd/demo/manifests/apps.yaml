@@ -78,6 +78,10 @@ spec:
       repoURL: https://github.com/<GITHUB_ORG_USERNAME>/<REPO_NAME>
       path: helm-guestbook
       targetRevision: HEAD
+      helm:
+        valueFiles:
+          - values.yaml
+          - values-production-west.yaml
     hydrateTo:
       targetBranch: environment/prod-next
     syncSource:
