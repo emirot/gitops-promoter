@@ -1,10 +1,10 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import argoIcon from '../assets/argo-icon-color-square.png';
 import argoTextLogo from '../assets/argologo.svg';
 import './TopBar.scss';
 
-export const TopBar: React.FC = () => (
+export const TopBar: FC = () => (
     <header className='topbar'>
         <Link to='/' className='topbar__brand'>
             <img src={argoIcon} alt='Argo Icon' className='topbar__logo' />

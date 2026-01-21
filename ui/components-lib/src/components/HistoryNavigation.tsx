@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { timeAgo } from '@shared/utils/util';
 import { getHealthStatus } from '@shared/utils/getStatus';
 import type { History, CommitStatus } from '@shared/types/promotion';
@@ -11,7 +11,7 @@ interface HistoryNavigationProps {
   onHistorySelect: (index: number) => void;
 }
 
-const HistoryNavigation: React.FC<HistoryNavigationProps> = ({
+const HistoryNavigation: FC<HistoryNavigationProps> = ({
   history,
   currentIndex,
   onHistorySelect

@@ -1,5 +1,5 @@
 import { namespaceStore } from '../../stores/NamespaceStore';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { PromotionStrategyStore } from '../../stores/PromotionStrategyStore';
 import PromotionStrategiesTiles from '../../components/PromotionStrategySummary/PromotionStrategyTiles';
 

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import type { FC } from 'react';
 import Select, { components, OptionProps, SingleValue } from 'react-select';
 import { FaFolder } from 'react-icons/fa';
 import { namespaceStore } from '../stores/NamespaceStore';
@@ -16,7 +17,7 @@ interface SelectOption {
   label: string;
 }
 
-const NamespaceDropdown: React.FC = () => {
+const NamespaceDropdown: FC = () => {
   const namespaces = namespaceStore((s: NamespaceStore) => s.namespaces);
   const setNamespace = namespaceStore((s: NamespaceStore) => s.setNamespace);
   const setNamespaces = namespaceStore((s: NamespaceStore) => s.setNamespaces);

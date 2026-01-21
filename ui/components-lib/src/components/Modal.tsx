@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import ReactDOM from 'react-dom';
 import './Modal.scss';
 import { FaTimes } from 'react-icons/fa';
@@ -8,7 +8,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   author?: string;
   subject?: string;
   message?: string;

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { namespaceStore } from '../stores/NamespaceStore';
 import { NamespaceDropdown } from '../components/NamespaceDropdown';
 import { PromotionStrategies } from '../features/promotion/PromotionStrategies';
@@ -11,7 +11,7 @@ interface NamespaceStore {
   setNamespaces: (namespaces: string[]) => void;
 }
 
-const DashboardPage: React.FC = () => {
+const DashboardPage: FC = () => {
   const namespace = namespaceStore((s: NamespaceStore) => s.namespace);
   
   

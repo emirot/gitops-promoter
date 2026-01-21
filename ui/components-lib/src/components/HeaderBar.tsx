@@ -1,11 +1,11 @@
-import React from 'react';
+import type { FC } from 'react';
 
 interface Props {
   name: string;
   link?: string;
 }
 
-const HeaderBar: React.FC<Props> = ({ name, link }) => {
+const HeaderBar: FC<Props> = ({ name, link }) => {
   const content = (
     <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{name}</h2>
   );

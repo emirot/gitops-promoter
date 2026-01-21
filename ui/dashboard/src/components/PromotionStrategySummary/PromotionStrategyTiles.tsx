@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PromotionStrategy } from '@shared/utils/PSData';
 import { PromotionStrategyTile } from '../PromotionStrategySummary/PromotionStrategyTile';
@@ -11,7 +11,7 @@ export interface PromotionStrategyTilesProps {
   namespace: string;
 }
 
-export const PromotionStrategiesTiles: React.FC<PromotionStrategyTilesProps> = ({ promotionStrategies, namespace }) => {
+export const PromotionStrategiesTiles: FC<PromotionStrategyTilesProps> = ({ promotionStrategies, namespace }) => {
   const navigate = useNavigate();
 
   return (

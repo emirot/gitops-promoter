@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import type { FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { namespaceStore } from '../stores/NamespaceStore'
 import { viewStore } from '../stores/ViewStore';
@@ -22,7 +23,7 @@ interface PromotionStrategyPageProps {
   strategyName?: string;
 }
 
-const PromotionStrategyPage: React.FC<PromotionStrategyPageProps> = ({ namespace: propsNamespace, strategyName: propsStrategyName }) => {
+const PromotionStrategyPage: FC<PromotionStrategyPageProps> = ({ namespace: propsNamespace, strategyName: propsStrategyName }) => {
   const { namespace: urlNamespace, name: urlStrategyName } = useParams();
   const namespace = propsNamespace || urlNamespace;
   const strategyName = propsStrategyName || urlStrategyName;

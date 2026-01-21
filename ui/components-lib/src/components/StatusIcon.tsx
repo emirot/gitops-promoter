@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaCircleNotch, FaHeart, FaHeartBroken } from 'react-icons/fa';
 import './StatusIcon.scss';
 
@@ -10,7 +10,7 @@ export const statusLabel = (phase: StatusType) => {
   return phase === 'promoted' || phase === 'success' ? 'Active' : 'Inactive';
 };
 
-export const StatusIcon: React.FC<{ phase: StatusType; type?: 'status' | 'health' }> = ({ phase, type = 'status' }) => {
+export const StatusIcon: FC<{ phase: StatusType; type?: 'status' | 'health' }> = ({ phase, type = 'status' }) => {
   const iconClass = `status-icon status-${phase}`;
   
 
