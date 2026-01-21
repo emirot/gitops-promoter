@@ -82,7 +82,7 @@ func CreateOrUpdateSecret(
 		if err != nil {
 			return fmt.Errorf("failed to create secret: %w", err)
 		}
-		fmt.Printf("Secret %s/%s created ✓\n", namespace, name)
+		setupLog.Info("Secret %s/%s created ✓\n", namespace, name)
 	} else {
 		// Exists, update it
 		secret.ResourceVersion = existing.ResourceVersion
@@ -90,7 +90,7 @@ func CreateOrUpdateSecret(
 		if err != nil {
 			return fmt.Errorf("failed to update secret: %w", err)
 		}
-		fmt.Printf("Secret %s/%s updated ✓\n", namespace, name)
+		setupLog.Info("Secret %s/%s updated ✓\n", namespace, name)
 	}
 
 	return nil

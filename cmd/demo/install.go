@@ -53,8 +53,9 @@ func InstallArgoCD(ctx context.Context) error {
 	}
 
 	url := config.ArgoCD.Upstream
+
 	// Run kubectl apply
-	fmt.Printf("Installing ArgoCD from %s...\n", url)
+	color.Green("Installing ArgoCD from %s...\n", url)
 	args := []string{"apply", "--server-side", "-n", "argocd", "-f", url}
 
 	cmd := exec.CommandContext(ctx, "kubectl", args...)
@@ -86,7 +87,7 @@ func InstallGitOpsPromoter(ctx context.Context) error {
 	}
 
 	url := config.GitOpsPromoter.Upstream
-	fmt.Printf("Installing GitOps Promoter from %s...\n", url)
+	color.Green("Installing GitOps Promoter from %s...\n", url)
 	args := []string{"apply", "-f", url}
 
 	cmd := exec.CommandContext(ctx, "kubectl", args...)
@@ -107,12 +108,12 @@ func EnsureNamespace(ctx context.Context, namespace string) error {
 		return nil
 	}
 
-	fmt.Printf("Ensuring namespace %s exists...\n", namespace)
+	setupLog.Info("Ensuring namespace exists", "namespace", namespace)
 
 	// Check if namespace exists
 	checkCmd := exec.CommandContext(ctx, "kubectl", "get", "namespace", namespace)
 	if err := checkCmd.Run(); err == nil {
-		fmt.Printf("Namespace %s already exists ✓\n", namespace)
+		setupLog.Info("Namespace already exists", "namespace", namespace)
 		return nil
 	}
 
@@ -125,7 +126,7 @@ func EnsureNamespace(ctx context.Context, namespace string) error {
 		return fmt.Errorf("failed to create namespace %s: %w", namespace, err)
 	}
 
-	fmt.Printf("Namespace %s created ✓\n", namespace)
+	setupLog.Info("Namespace created", "namespace", namespace)
 	return nil
 }
 

@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/goccy/go-yaml"
-	"golang.org/x/term"
 )
 
 // Credentials holds all user-provided authentication info
@@ -101,18 +101,15 @@ func (p *InteractivePrompter) prompt(message string) (string, error) {
 }
 
 func (p *InteractivePrompter) promptHidden(message string) (string, error) {
-	_, _ = fmt.Fprint(p.writer, message)
-
-	if f, ok := p.reader.(*os.File); ok {
-		tokenBytes, err := term.ReadPassword(int(f.Fd()))
-		_, _ = fmt.Fprintln(p.writer) // newline after hidden input
-		if err == nil {
-			return string(tokenBytes), nil
-		}
+	var password string
+	prompt := &survey.Password{
+		Message: message,
 	}
-
-	// Fallback for non-terminal
-	return p.prompt("")
+	err := survey.AskOne(prompt, &password)
+	if err != nil {
+		return "", fmt.Errorf("failed to read password: %w", err)
+	}
+	return password, nil
 }
 
 // FileCredentialsProvider loads credentials from a config file

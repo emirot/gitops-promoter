@@ -3,15 +3,16 @@ package demo
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/google/go-github/v71/github"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
+
+var setupLog = ctrl.Log.WithName("setup")
 
 // ArgoCDConfig holds ArgoCD configuration
 type ArgoCDConfig struct {
@@ -63,7 +64,7 @@ func NewDemoCommand() *cobra.Command {
 			}
 
 			// 3. Create the repository
-			fmt.Printf("Creating repository %s/%s...\n", username, repoName)
+			color.Green("Creating repository %s/%s...\n", username, repoName)
 			repo, _, err := client.Repositories.Create(ctx, "", &github.Repository{
 				Name:        github.Ptr(repoName),
 				Description: github.Ptr("GitOps Promoter demo repository"),
@@ -75,14 +76,14 @@ func NewDemoCommand() *cobra.Command {
 				if !strings.Contains(err.Error(), "already exists") {
 					return fmt.Errorf("failed to create repository: %w", err)
 				}
-				fmt.Println("Repository already exists, fetching...")
+				setupLog.Info("Repository already exists, fetching...")
 				repo, _, err = client.Repositories.Get(ctx, username, repoName)
 				if err != nil {
 					return fmt.Errorf("failed to get existing repository: %w", err)
 				}
 			}
 
-			fmt.Printf("Repository available at: %s\n", repo.GetHTMLURL())
+			color.Green("Repository available at: %s\n", repo.GetHTMLURL())
 
 			// 4. Create files in the repo
 			if err := UploadManifests(ctx, client, repo, Replacements{
@@ -134,6 +135,9 @@ func NewDemoCommand() *cobra.Command {
 
 			color.Green("Setup complete!")
 			return nil
+
+			// Update requeue interval
+
 		},
 	}
 
@@ -141,22 +145,4 @@ func NewDemoCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&private, "private", true, "Create a private repository")
 
 	return cmd
-}
-
-// KubectlApplyFile applies a YAML file using kubectl
-func KubectlApplyFile(ctx context.Context, filePath string, namespace string) error {
-	args := []string{"apply", "-f", filePath}
-	if namespace != "" {
-		args = append([]string{"-n", namespace}, args...)
-	}
-
-	cmd := exec.CommandContext(ctx, "kubectl", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("kubectl apply failed: %w", err)
-	}
-
-	return nil
 }
