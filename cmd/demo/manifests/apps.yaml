@@ -67,7 +67,7 @@ metadata:
   namespace: argocd
   labels:
     # This label allows the ArgoCDCommitStatus to find the applications.
-    app-name: helm-guestbook
+    app-name: helm-guestbook-west
 spec:
   project: default
   destination:
@@ -86,7 +86,7 @@ spec:
       targetBranch: environment/prod-next
     syncSource:
       targetBranch: environment/prod
-      path: helm-guestbook
+      path: helm-guestbook/hydrate-west
   syncPolicy:
     automated:
       prune: true
@@ -102,7 +102,7 @@ metadata:
   namespace: argocd
   labels:
     # This label allows the ArgoCDCommitStatus to find the applications.
-    app-name: helm-guestbook
+    app-name: helm-guestbook-east
 spec:
   project: default
   destination:
@@ -121,7 +121,7 @@ spec:
       targetBranch: environment/prod-next
     syncSource:
       targetBranch: environment/prod
-      path: helm-guestbook
+      path: helm-guestbook/hydrate-east
   syncPolicy:
     automated:
       prune: true

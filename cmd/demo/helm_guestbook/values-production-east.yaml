@@ -2,3 +2,5 @@ service:
   type: LoadBalancer
 
 region: us-east-1
+
+replicaCount: 2
