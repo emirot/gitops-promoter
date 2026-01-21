@@ -13,16 +13,23 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Config structure for config.yaml
-type Config struct {
-	ArgoCD struct {
-		Upstream string `yaml:"upstream"`
-	} `yaml:"argocd"`
-	GitOpsPromoter struct {
-		Upstream string `yaml:"upstream"`
-	} `yaml:"gitops-promoter"`
+// ArgoCDConfig holds ArgoCD configuration
+type ArgoCDConfig struct {
+	Upstream string `yaml:"upstream"`
 }
 
+// GitOpsPromoterConfig holds GitOps Promoter configuration
+type GitOpsPromoterConfig struct {
+	Upstream string `yaml:"upstream"`
+}
+
+// Config structure for config.yaml
+type Config struct {
+	ArgoCD         ArgoCDConfig         `yaml:"argocd"`
+	GitOpsPromoter GitOpsPromoterConfig `yaml:"gitops-promoter"`
+}
+
+// NewDemoCommand creates a new demo command for setting up a gitops-promoter demo repository
 func NewDemoCommand() *cobra.Command {
 	var repoName string
 	var private bool
@@ -58,21 +65,20 @@ func NewDemoCommand() *cobra.Command {
 			// 3. Create the repository
 			fmt.Printf("Creating repository %s/%s...\n", username, repoName)
 			repo, _, err := client.Repositories.Create(ctx, "", &github.Repository{
-				Name:        github.String(repoName),
-				Description: github.String("GitOps Promoter demo repository"),
-				Private:     github.Bool(private),
-				AutoInit:    github.Bool(true), // Creates with README
+				Name:        github.Ptr(repoName),
+				Description: github.Ptr("GitOps Promoter demo repository"),
+				Private:     github.Ptr(private),
+				AutoInit:    github.Ptr(true), // Creates with README
 			})
 			if err != nil {
 				// Check if repo already exists
-				if strings.Contains(err.Error(), "already exists") {
-					fmt.Println("Repository already exists, fetching...")
-					repo, _, err = client.Repositories.Get(ctx, username, repoName)
-					if err != nil {
-						return fmt.Errorf("failed to get existing repository: %w", err)
-					}
-				} else {
+				if !strings.Contains(err.Error(), "already exists") {
 					return fmt.Errorf("failed to create repository: %w", err)
+				}
+				fmt.Println("Repository already exists, fetching...")
+				repo, _, err = client.Repositories.Get(ctx, username, repoName)
+				if err != nil {
+					return fmt.Errorf("failed to get existing repository: %w", err)
 				}
 			}
 
@@ -99,8 +105,11 @@ func NewDemoCommand() *cobra.Command {
 				return fmt.Errorf("failed to create namespace: %w", err)
 			}
 
-			err = CreateOrUpdateSecret(ctx, k8sClient, "helm-guestbook-ps", "github-demo-secret", map[string]string{"githubAppPrivateKey": credentials.PrivateKey}, map[string]string{})
-
+			secretData := map[string]string{"githubAppPrivateKey": credentials.PrivateKey}
+			err = CreateOrUpdateSecret(
+				ctx, k8sClient, "helm-guestbook-ps", "github-demo-secret",
+				secretData, map[string]string{},
+			)
 			if err != nil {
 				return fmt.Errorf("failed to create promotion strategy github app secret: %w", err)
 			}

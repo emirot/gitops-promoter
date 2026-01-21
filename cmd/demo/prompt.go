@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -63,7 +64,7 @@ func (p *InteractivePrompter) GetCredentials() (*Credentials, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read app ID: %w", err)
 	}
-	fmt.Fprintf(p.writer, "Application ID: %s\n", appID)
+	_, _ = fmt.Fprintf(p.writer, "Application ID: %s\n", appID)
 
 	privateKeyPath, err := p.prompt("Enter path to your GitHub App private key (.pem): ")
 	if err != nil {
@@ -90,21 +91,21 @@ func (p *InteractivePrompter) GetCredentials() (*Credentials, error) {
 }
 
 func (p *InteractivePrompter) prompt(message string) (string, error) {
-	fmt.Fprint(p.writer, message)
+	_, _ = fmt.Fprint(p.writer, message)
 	reader := bufio.NewReader(p.reader)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read input: %w", err)
 	}
 	return strings.TrimSpace(input), nil
 }
 
 func (p *InteractivePrompter) promptHidden(message string) (string, error) {
-	fmt.Fprint(p.writer, message)
+	_, _ = fmt.Fprint(p.writer, message)
 
 	if f, ok := p.reader.(*os.File); ok {
 		tokenBytes, err := term.ReadPassword(int(f.Fd()))
-		fmt.Fprintln(p.writer) // newline after hidden input
+		_, _ = fmt.Fprintln(p.writer) // newline after hidden input
 		if err == nil {
 			return string(tokenBytes), nil
 		}
@@ -142,7 +143,7 @@ func (v *PEMValidator) Validate(path string) error {
 
 	block, _ := pem.Decode(data)
 	if block == nil {
-		return fmt.Errorf("file does not contain valid PEM data")
+		return errors.New("file does not contain valid PEM data")
 	}
 
 	switch block.Type {
