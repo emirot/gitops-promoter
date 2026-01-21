@@ -19,9 +19,9 @@ func CopyEmbeddedDirToRepo(
 	client *github.Client,
 	destOwner, destRepo, destPath string,
 ) error {
-	err := fs.WalkDir(helmGuestbookFS, "helm_guestbook", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("walk error at %s: %w", path, err)
+	err := fs.WalkDir(helmGuestbookFS, "helm_guestbook", func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return fmt.Errorf("walk error at %s: %w", path, walkErr)
 		}
 		if d.IsDir() {
 			return nil
@@ -36,15 +36,27 @@ func CopyEmbeddedDirToRepo(
 		relativePath := strings.TrimPrefix(path, "helm_guestbook/")
 		destFilePath := destPath + "/" + relativePath
 
+		// Check if file already exists
+		existing, _, _, _ := client.Repositories.GetContents(ctx, destOwner, destRepo, destFilePath, nil)
+
 		opts := &github.RepositoryContentFileOptions{
-			Message: github.Ptr("Add " + destFilePath),
 			Content: content,
 		}
-		_, _, createErr := client.Repositories.CreateFile(
-			ctx, destOwner, destRepo, destFilePath, opts,
-		)
-		if createErr != nil {
-			return fmt.Errorf("failed to create %s: %w", destFilePath, createErr)
+
+		var opErr error
+		if existing != nil {
+			// File exists - update it
+			opts.Message = github.Ptr("Update " + destFilePath)
+			opts.SHA = existing.SHA
+			_, _, opErr = client.Repositories.UpdateFile(ctx, destOwner, destRepo, destFilePath, opts)
+		} else {
+			// File doesn't exist - create it
+			opts.Message = github.Ptr("Add " + destFilePath)
+			_, _, opErr = client.Repositories.CreateFile(ctx, destOwner, destRepo, destFilePath, opts)
+		}
+
+		if opErr != nil {
+			return fmt.Errorf("failed to create/update %s: %w", destFilePath, opErr)
 		}
 
 		fmt.Printf("✓ %s\n", destFilePath)

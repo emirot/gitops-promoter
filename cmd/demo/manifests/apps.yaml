@@ -63,7 +63,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prod-helm-guestbook
+  name: prod-helm-guestbook-west
   namespace: argocd
   labels:
     # This label allows the ArgoCDCommitStatus to find the applications.
@@ -82,6 +82,41 @@ spec:
         valueFiles:
           - values.yaml
           - values-production-west.yaml
+    hydrateTo:
+      targetBranch: environment/prod-next
+    syncSource:
+      targetBranch: environment/prod
+      path: helm-guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      allowEmpty: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-helm-guestbook-east
+  namespace: argocd
+  labels:
+    # This label allows the ArgoCDCommitStatus to find the applications.
+    app-name: helm-guestbook
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  sourceHydrator:
+    drySource:
+      repoURL: https://github.com/<GITHUB_ORG_USERNAME>/<REPO_NAME>
+      path: helm-guestbook
+      targetRevision: HEAD
+      helm:
+        valueFiles:
+          - values.yaml
+          - values-production-east.yaml
     hydrateTo:
       targetBranch: environment/prod-next
     syncSource:
