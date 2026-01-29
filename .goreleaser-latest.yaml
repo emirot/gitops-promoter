@@ -68,7 +68,6 @@ docker_manifests:
       - "quay.io/argoprojlabs/gitops-promoter:latest-amd64"
       - "quay.io/argoprojlabs/gitops-promoter:latest-arm64"
 
-# No archives for latest builds
 archives:
   - id: binary
     formats: [tar.gz]

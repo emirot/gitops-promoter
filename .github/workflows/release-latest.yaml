@@ -60,3 +60,11 @@ jobs:
             quay.io/argoprojlabs/gitops-promoter:latest-amd64 \
             quay.io/argoprojlabs/gitops-promoter:latest-arm64
           docker manifest push quay.io/argoprojlabs/gitops-promoter:latest
+
+      - name: Upload archives as artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: gitops-promoter-latest-archives
+          path: |
+            release_dist/*.tar.gz
+          retention-days: 60
