@@ -69,7 +69,27 @@ docker_manifests:
       - "quay.io/argoprojlabs/gitops-promoter:latest-arm64"
 
 # No archives for latest builds
-archives: []
+archives:
+  - id: binary
+    formats: [tar.gz]
+    ids:
+      - "gitops-promoter"
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+  - id: extension
+    name_template: "{{ .ProjectName }}-argocd-extension"
+    formats: [tar.gz]
+    meta: true
+    files:
+      - ui/extension/dist/extension-promoter.js
+    # Wrap in top-level resources directory to be compatible with the extension installer: https://github.com/argoproj-labs/argocd-extension-installer/blob/4684a5d2fb8b94269ee22556794aad229485f48d/README.md#L25
+    wrap_in_directory: 'resources'
 
 # No GitHub release for latest builds
 release:
