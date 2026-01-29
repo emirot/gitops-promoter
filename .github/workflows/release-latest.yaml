@@ -60,3 +60,14 @@ jobs:
             quay.io/argoprojlabs/gitops-promoter:latest-amd64 \
             quay.io/argoprojlabs/gitops-promoter:latest-arm64
           docker manifest push quay.io/argoprojlabs/gitops-promoter:latest
+
+      - name: Upload to Latest Artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          prerelease: true
+          files: |
+            release_dist/*.tar.gz
+            install.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
