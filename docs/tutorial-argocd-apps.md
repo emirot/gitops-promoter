@@ -23,6 +23,15 @@ To complete this tutorial, you will need the following:
 > GitOps Promoter provides several opt-in Argo CD integrations that improve the user experience. Check out the 
 > [Argo CD Integrations](./argocd-integrations.md) page for more information.
 
+
+## For the impatient
+
+If you want to get started right away, you can use the CLI to create and deploy all the resources with a single command:
+
+```bash
+./gitops-promomter demo
+```
+
 ## Set up the test cluster
 
 ### Create the cluster
