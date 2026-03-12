@@ -1,0 +1,78 @@
+name: Kubebuilder Helm Chart Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+env:
+  KUBEBUILDER_VERSION: v4.11.1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  helm-chart-validation:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # pin@v4
+      - name: Set up Go
+        uses: actions/setup-go@4aaadf42668403795cdfdb15b1c4250e9fed12b9 # pin@v5
+        with:
+          go-version: "1.25"
+
+      - name: Install kubebuilder
+        run: |
+          curl -L -o kubebuilder "https://github.com/kubernetes-sigs/kubebuilder/releases/download/${{ env.KUBEBUILDER_VERSION }}/kubebuilder_$(go env GOOS)_$(go env GOARCH)"
+          chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
+          kubebuilder version
+
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # pin v4.3
+        with:
+          version: v3.20.0
+
+      - name: Generate Helm chart with Kubebuilder
+        run: |
+          kubebuilder edit --plugins=helm/v2-alpha --output-dir=./tmp_chart --manifests=./dist/install.yaml
+
+      - name: Lint Helm chart
+        run: |
+          helm lint ./tmp_chart/chart
+
+#      - name: Template Helm chart (dry-run validation)
+#        run: |
+#          helm template test-release ./dist/helm/promoter \
+#            --namespace test-namespace \
+#            --debug \
+#            --set webhook.enabled=false
+#
+#      - name: Validate CRDs are present
+#        run: |
+#          if [ ! -d "./dist/helm/promoter/templates/crd" ]; then
+#            echo "ERROR: CRD templates directory not found"
+#            exit 1
+#          fi
+#
+#          crd_count=$(find ./dist/helm/promoter/templates/crd -name "*.yaml" | wc -l)
+#          if [ "$crd_count" -eq 0 ]; then
+#            echo "ERROR: No CRD templates generated"
+#            exit 1
+#          fi
+#
+#          echo "Found $crd_count CRD template(s)"
+
+      - name: Upload Helm chart artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: helm-chart
+          path: ./tmp_chart
+          retention-days: 3
