@@ -49,7 +49,7 @@ jobs:
 
       - name: Lint Helm chart
         run: |
-          helm lint ./tmp_chart/chart
+          helm lint ./tmp_chart/chart --debug
 
 #      - name: Template Helm chart (dry-run validation)
 #        run: |
