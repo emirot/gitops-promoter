@@ -49,29 +49,7 @@ jobs:
 
       - name: Lint Helm chart
         run: |
-          helm lint ./tmp_chart/chart --debug
-
-#      - name: Template Helm chart (dry-run validation)
-#        run: |
-#          helm template test-release ./dist/helm/promoter \
-#            --namespace test-namespace \
-#            --debug \
-#            --set webhook.enabled=false
-#
-#      - name: Validate CRDs are present
-#        run: |
-#          if [ ! -d "./dist/helm/promoter/templates/crd" ]; then
-#            echo "ERROR: CRD templates directory not found"
-#            exit 1
-#          fi
-#
-#          crd_count=$(find ./dist/helm/promoter/templates/crd -name "*.yaml" | wc -l)
-#          if [ "$crd_count" -eq 0 ]; then
-#            echo "ERROR: No CRD templates generated"
-#            exit 1
-#          fi
-#
-#          echo "Found $crd_count CRD template(s)"
+          helm lint ./tmp_chart/chart
 
       - name: Upload Helm chart artifact
         uses: actions/upload-artifact@v4
